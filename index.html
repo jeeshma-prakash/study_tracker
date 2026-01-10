@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Study Tracker Dashboard</title>
+  <link rel="stylesheet" href="study.css">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body>
+
+<div class="app">
+
+  <!-- LEFT SIDEBAR -->
+  <aside class="sidebar">
+    <h2>📋 Daily Todo</h2>
+
+    <!-- Calendar Widget -->
+    <div class="calendar-widget">
+      <div class="calendar-header">
+        <button onclick="changeMonth(-1)">◀</button>
+        <div id="monthDisplay">Month Year</div>
+        <button onclick="changeMonth(1)">▶</button>
+      </div>
+      <div class="calendar-days">
+        <div>S</div>
+        <div>M</div>
+        <div>T</div>
+        <div>W</div>
+        <div>T</div>
+        <div>F</div>
+        <div>S</div>
+      </div>
+      <div id="calendarDates" class="calendar-dates"></div>
+    </div>
+
+    <div class="day-info">
+      <div id="dayDisplay">Day 1 - 0000-00-00</div>
+      <button class="today-btn" onclick="goToToday()">Today</button>
+    </div>
+
+    <input id="taskInput" type="text" placeholder="Add study task">
+    <button onclick="addTask()">Add</button>
+    <button onclick="deleteTask()">Delete</button>
+
+    <ul id="taskList"></ul>
+  </aside>
+
+  <!-- RIGHT DASHBOARD -->
+  <main class="dashboard">
+    <div class="dashboard-header">
+      <h1>📊 Dashboard</h1>
+      <div class="export-buttons">
+        <button class="export-btn" onclick="exportToCSV()" title="Export to CSV/Excel">
+          📥 Export Notes
+        </button>
+        <button class="export-btn" onclick="emailNotes()" title="Email Notes">
+          📧 Email Notes
+        </button>
+      </div>
+    </div>
+
+    <div class="card">
+      <h3>Overall Progress</h3>
+      <div class="progress-box">
+        <div id="progressBar"></div>
+      </div>
+      <p id="progressText">0% Completed</p>
+    </div>
+
+    <div class="card stats">
+      <div>
+        <h4>Total Tasks</h4>
+        <p id="totalTasks">0</p>
+      </div>
+      <div>
+        <h4>Completed</h4>
+        <p id="completedTasks">0</p>
+      </div>
+      <div>
+        <h4>Pending</h4>
+        <p id="pendingTasks">0</p>
+      </div>
+    </div>
+
+    <!-- Analytics Charts -->
+    <div class="charts-row">
+      <div class="card chart-card">
+        <h3>📈 Weekly Activity</h3>
+        <canvas id="weeklyActivityChart"></canvas>
+      </div>
+      
+      <div class="card chart-card">
+        <h3>📊 Task Distribution</h3>
+        <canvas id="taskDistributionChart"></canvas>
+      </div>
+    </div>
+
+    <div class="charts-row">
+      <div class="card chart-card">
+        <h3>🎯 Daily Completion Rate</h3>
+        <canvas id="dailyCompletionChart"></canvas>
+      </div>
+      
+      <div class="card chart-card">
+        <h3>📅 Monthly Overview</h3>
+        <canvas id="monthlyOverviewChart"></canvas>
+      </div>
+    </div>
+
+    <div class="card" id="notesCard" style="display: none;">
+      <div class="notes-header">
+        <h3 id="notesTaskTitle">Task Notes</h3>
+        <button class="close-notes" onclick="closeNotes()">✕</button>
+      </div>
+      
+      <button class="add-note-btn" id="addNoteBtn" onclick="toggleNoteEditor()">
+        ➕ Add Note
+      </button>
+      
+      <div id="noteEditorContainer" style="display: none;">
+        <div class="formatting-toolbar">
+          <button onclick="formatText('bold')" title="Bold" class="format-btn"><b>B</b></button>
+          <button onclick="formatText('italic')" title="Italic" class="format-btn"><i>I</i></button>
+          <button onclick="formatText('underline')" title="Underline" class="format-btn"><u>U</u></button>
+          <button onclick="formatText('strikethrough')" title="Strikethrough" class="format-btn"><s>S</s></button>
+          <span class="toolbar-divider">|</span>
+          <button onclick="formatText('insertOrderedList')" title="Numbered List" class="format-btn">1. </button>
+          <button onclick="formatText('insertUnorderedList')" title="Bullet List" class="format-btn">• </button>
+          <span class="toolbar-divider">|</span>
+          <button onclick="formatText('justifyLeft')" title="Align Left" class="format-btn">⬅</button>
+          <button onclick="formatText('justifyCenter')" title="Align Center" class="format-btn">⬌</button>
+          <button onclick="formatText('justifyRight')" title="Align Right" class="format-btn">➡</button>
+        </div>
+        <div id="notesTextarea" contenteditable="true" class="rich-text-editor" placeholder="Type your note here..."></div>
+        <button class="save-notes-btn" onclick="saveNotes()">Save Note</button>
+      </div>
+    </div>
+
+    <div id="savedNotesContainer"></div>
+
+  </main>
+
+</div>
+
+<script src="script.js"></script>
+</body>
+</html>
