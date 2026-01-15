@@ -15,6 +15,8 @@ tasks = tasks.map(t => {
     t.notes = [];
   }
   if (!t.completedAt) t.completedAt = null;
+  if (!t.subtasks) t.subtasks = [];
+  if (t.parentId === undefined) t.parentId = null;
   return t;
 });
 
@@ -43,13 +45,87 @@ function saveAndRender() {
   // Don't render saved notes here - only when eye icon is clicked
 }
 
-function addTask() {
-  const input = document.getElementById("taskInput");
-  if (!input.value) return;
+// Task Modal Functions
+let subtaskInputCount = 0;
 
-  tasks.push({ text: input.value, done: false, date: selectedDate, notes: [] });
-  input.value = "";
+function openTaskModal() {
+  document.getElementById('taskModal').style.display = 'flex';
+  document.getElementById('mainTaskInput').value = '';
+  document.getElementById('subtasksList').innerHTML = '';
+  subtaskInputCount = 0;
+  // Add one empty subtask input by default
+  addSubtaskInput();
+}
+
+function closeTaskModal() {
+  document.getElementById('taskModal').style.display = 'none';
+}
+
+function addSubtaskInput() {
+  const subtasksList = document.getElementById('subtasksList');
+  const inputId = `subtask-${subtaskInputCount++}`;
+  
+  const inputWrapper = document.createElement('div');
+  inputWrapper.className = 'subtask-input-wrapper';
+  inputWrapper.innerHTML = `
+    <input type="text" id="${inputId}" placeholder="Enter subtask" class="modal-input subtask-input">
+    <button class="remove-subtask-btn" onclick="removeSubtaskInput(this)">✕</button>
+  `;
+  
+  subtasksList.appendChild(inputWrapper);
+  document.getElementById(inputId).focus();
+}
+
+function removeSubtaskInput(btn) {
+  btn.parentElement.remove();
+}
+
+function saveTaskFromModal() {
+  const mainTaskText = document.getElementById('mainTaskInput').value.trim();
+  if (!mainTaskText) {
+    alert('Please enter a main task');
+    return;
+  }
+  
+  // Create main task
+  const mainTaskId = Date.now();
+  tasks.push({
+    text: mainTaskText,
+    done: false,
+    date: selectedDate,
+    notes: [],
+    subtasks: [],
+    parentId: null,
+    id: mainTaskId
+  });
+  
+  // Get all subtask inputs
+  const subtaskInputs = document.querySelectorAll('.subtask-input');
+  subtaskInputs.forEach((input, index) => {
+    const subtaskText = input.value.trim();
+    if (subtaskText) {
+      tasks.push({
+        text: subtaskText,
+        done: false,
+        date: selectedDate,
+        notes: [],
+        subtasks: [],
+        parentId: mainTaskId,
+        id: mainTaskId + index + 1
+      });
+    }
+  });
+  
+  closeTaskModal();
   saveAndRender();
+}
+
+// Close modal when clicking outside
+window.onclick = function(event) {
+  const modal = document.getElementById('taskModal');
+  if (event.target === modal) {
+    closeTaskModal();
+  }
 }
 
 function toggleTask(index) {
@@ -66,16 +142,39 @@ function toggleTask(index) {
   saveAndRender();
 }
 
+function addSubtask(parentIndex) {
+  const parentTask = tasks[parentIndex];
+  const subtaskText = prompt("Enter subtask:");
+  if (!subtaskText) return;
+  
+  tasks.push({
+    text: subtaskText,
+    done: false,
+    date: selectedDate,
+    notes: [],
+    subtasks: [],
+    parentId: parentTask.id,
+    id: Date.now()
+  });
+  
+  saveAndRender();
+}
+
 function renderTasks() {
   const list = document.getElementById("taskList");
   list.innerHTML = "";
 
-  // Render only tasks for the selected date
+  // Render only tasks for the selected date (only parent tasks or tasks without parents)
   let any = false;
   tasks.forEach((task, index) => {
-    if (task.date === selectedDate) {
+    if (task.date === selectedDate && !task.parentId) {
       any = true;
       const hasNotes = task.notes && task.notes.length > 0;
+      
+      // Get subtasks for this parent
+      const subtasks = tasks.filter(t => t.parentId === task.id);
+      const subtaskCount = subtasks.length;
+      const completedSubtasks = subtasks.filter(t => t.done).length;
       
       // Format completion time and check if late
       let completionInfo = '';
@@ -101,19 +200,67 @@ function renderTasks() {
         `;
       }
       
+      // Render parent task
       list.innerHTML += `
-      <li>
+      <li class="parent-task">
         <div class="task-main">
           <input type="checkbox" ${task.done ? "checked" : ""}
             onclick="toggleTask(${index})">
           <span>${task.text}</span>
-          <button class="eye-btn ${hasNotes ? 'has-notes' : ''}" onclick="openNotes(${index})" title="Add/View Notes">
-            👁️
-          </button>
+          <div class="task-actions">
+            ${subtaskCount > 0 ? `<span class="subtask-count">${completedSubtasks}/${subtaskCount}</span>` : ''}
+            <button class="add-subtask-btn" onclick="addSubtask(${index})" title="Add Subtask">➕</button>
+            <button class="eye-btn ${hasNotes ? 'has-notes' : ''}" onclick="openNotes(${index})" title="Add/View Notes">
+              👁️
+            </button>
+          </div>
         </div>
         ${completionInfo}
       </li>
     `;
+      
+      // Render subtasks
+      subtasks.forEach((subtask) => {
+        const subIndex = tasks.indexOf(subtask);
+        const subHasNotes = subtask.notes && subtask.notes.length > 0;
+        
+        let subCompletionInfo = '';
+        if (subtask.done && subtask.completedAt) {
+          const completedDate = new Date(subtask.completedAt);
+          const taskDate = new Date(subtask.date + 'T00:00:00');
+          const isLate = completedDate.toDateString() !== taskDate.toDateString();
+          
+          const timeStr = completedDate.toLocaleTimeString('en-US', { 
+            hour: '2-digit', 
+            minute: '2-digit' 
+          });
+          const dateStr = completedDate.toLocaleDateString('en-US', { 
+            month: 'short', 
+            day: 'numeric' 
+          });
+          
+          subCompletionInfo = `
+            <div class="completion-info ${isLate ? 'late' : 'on-time'}">
+              <span class="completion-badge">${isLate ? '⚠️ Late' : '✓ On Time'}</span>
+              <span class="completion-time">Completed: ${dateStr} at ${timeStr}</span>
+            </div>
+          `;
+        }
+        
+        list.innerHTML += `
+        <li class="subtask">
+          <div class="task-main">
+            <input type="checkbox" ${subtask.done ? "checked" : ""}
+              onclick="toggleTask(${subIndex})">
+            <span>${subtask.text}</span>
+            <button class="eye-btn ${subHasNotes ? 'has-notes' : ''}" onclick="openNotes(${subIndex})" title="Add/View Notes">
+              👁️
+            </button>
+          </div>
+          ${subCompletionInfo}
+        </li>
+      `;
+      });
     }
   });
 
@@ -463,8 +610,9 @@ function updateCharts() {
 }
 
 function updateWeeklyActivityChart() {
-  const ctx = document.getElementById('weeklyActivityChart');
-  if (!ctx) return;
+  const ctxEl = document.getElementById('weeklyActivityChart');
+  if (!ctxEl) return;
+  const ctx = ctxEl.getContext('2d');
   
   // Get last 7 days data
   const today = new Date();
@@ -498,14 +646,24 @@ function updateWeeklyActivityChart() {
         {
           label: 'Completed',
           data: completedData,
-          backgroundColor: '#b4a7d6',
+          backgroundColor: (() => {
+            const g = ctx.createLinearGradient(0, 0, 0, 200);
+            g.addColorStop(0, '#438BC4'); // Bluebird
+            g.addColorStop(1, '#8CC1E9'); // Clear Skies
+            return g;
+          })(),
           borderRadius: 8,
           barThickness: 25
         },
         {
           label: 'Pending',
           data: pendingData,
-          backgroundColor: '#ffc4a3',
+          backgroundColor: (() => {
+            const g = ctx.createLinearGradient(0, 0, 0, 200);
+            g.addColorStop(0, '#8CC1E9'); // Clear Skies
+            g.addColorStop(1, '#FFF8E7'); // Clouds
+            return g;
+          })(),
           borderRadius: 8,
           barThickness: 25
         }
@@ -533,8 +691,9 @@ function updateWeeklyActivityChart() {
 }
 
 function updateTaskDistributionChart() {
-  const ctx = document.getElementById('taskDistributionChart');
-  if (!ctx) return;
+  const ctxEl = document.getElementById('taskDistributionChart');
+  if (!ctxEl) return;
+  const ctx = ctxEl.getContext('2d');
   
   const totalTasks = tasks.length;
   const completed = tasks.filter(t => t.done).length;
@@ -550,7 +709,10 @@ function updateTaskDistributionChart() {
       labels: ['Completed', 'Pending'],
       datasets: [{
         data: [completed, pending],
-        backgroundColor: ['#b8e6d5', '#ffc9d4'],
+        backgroundColor: [
+          (() => { const g = ctx.createLinearGradient(0,0,200,0); g.addColorStop(0,'#0055A0'); g.addColorStop(1,'#438BC4'); return g; })(),
+          '#8CC1E9'
+        ],
         borderWidth: 0
       }]
     },
@@ -568,8 +730,9 @@ function updateTaskDistributionChart() {
 }
 
 function updateDailyCompletionChart() {
-  const ctx = document.getElementById('dailyCompletionChart');
-  if (!ctx) return;
+  const ctxEl = document.getElementById('dailyCompletionChart');
+  if (!ctxEl) return;
+  const ctx = ctxEl.getContext('2d');
   
   // Get last 14 days data
   const today = new Date();
@@ -600,11 +763,11 @@ function updateDailyCompletionChart() {
       datasets: [{
         label: 'Completion %',
         data: percentages,
-        borderColor: '#b4a7d6',
-        backgroundColor: 'rgba(180, 167, 214, 0.1)',
+        borderColor: '#438BC4',
+        backgroundColor: 'rgba(67, 139, 196, 0.12)',
         tension: 0.4,
         fill: true,
-        pointBackgroundColor: '#b4a7d6',
+        pointBackgroundColor: '#438BC4',
         pointRadius: 4,
         pointHoverRadius: 6
       }]
@@ -633,8 +796,9 @@ function updateDailyCompletionChart() {
 }
 
 function updateMonthlyOverviewChart() {
-  const ctx = document.getElementById('monthlyOverviewChart');
-  if (!ctx) return;
+  const ctxEl = document.getElementById('monthlyOverviewChart');
+  if (!ctxEl) return;
+  const ctx = ctxEl.getContext('2d');
   
   // Get current month data by week
   const today = new Date();
@@ -670,13 +834,13 @@ function updateMonthlyOverviewChart() {
         {
           label: 'Completed',
           data: completedData,
-          backgroundColor: '#a8d5e2',
+          backgroundColor: (() => { const g = ctx.createLinearGradient(0,0,0,200); g.addColorStop(0,'#0055A0'); g.addColorStop(1,'#12284B'); return g; })(),
           borderRadius: 8
         },
         {
           label: 'Total',
           data: totalData,
-          backgroundColor: '#ffd9c0',
+          backgroundColor: '#8CC1E9',
           borderRadius: 8
         }
       ]

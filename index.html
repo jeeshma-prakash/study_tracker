@@ -38,8 +38,7 @@
       <button class="today-btn" onclick="goToToday()">Today</button>
     </div>
 
-    <input id="taskInput" type="text" placeholder="Add study task">
-    <button onclick="addTask()">Add</button>
+    <button class="add-task-modal-btn" onclick="openTaskModal()"> Add Task</button>
     <button onclick="deleteTask()">Delete</button>
 
     <ul id="taskList"></ul>
@@ -140,6 +139,30 @@
 
   </main>
 
+</div>
+
+<!-- Task Modal -->
+<div id="taskModal" class="modal">
+  <div class="modal-content">
+    <div class="modal-header">
+      <h2>Add New Task</h2>
+      <span class="close-modal" onclick="closeTaskModal()">&times;</span>
+    </div>
+    <div class="modal-body">
+      <label for="mainTaskInput">Main Task:</label>
+      <input type="text" id="mainTaskInput" placeholder="Enter main task" class="modal-input">
+      
+      <div class="subtasks-section">
+        <label>Subtasks:</label>
+        <div id="subtasksList"></div>
+        <button class="add-subtask-input-btn" onclick="addSubtaskInput()">+ Add Subtask</button>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="cancel-btn" onclick="closeTaskModal()">Cancel</button>
+      <button class="save-btn" onclick="saveTaskFromModal()">Save Task</button>
+    </div>
+  </div>
 </div>
 
 <script src="script.js"></script>
