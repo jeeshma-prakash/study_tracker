@@ -364,6 +364,36 @@ body {
   margin-left: auto;
 }
 
+.summary-btn {
+  background: transparent;
+  border: none;
+  font-size: 16px;
+  cursor: pointer;
+  padding: 6px 8px;
+  border-radius: 8px;
+  transition: all 0.2s;
+  color: var(--primary-peach);
+}
+
+.summary-btn:hover {
+  background: rgba(67,139,196,0.06);
+}
+
+.open-subtask-notes {
+  background: linear-gradient(135deg, var(--primary-lavender) 0%, var(--primary-purple) 100%);
+  border: none;
+  color: white;
+  padding: 6px 10px;
+  border-radius: 8px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.muted {
+  color: var(--text-gray);
+  font-style: italic;
+}
+
 .sidebar li input[type="checkbox"] {
   width: 20px;
   height: 20px;
@@ -435,7 +465,7 @@ body {
   font-weight: 600;
   padding: 3px 8px;
   border-radius: 12px;
-  background: var(--primary-orange);
+  /* background: var(--primary-orange); */
   color: white;
 }
 
@@ -851,7 +881,7 @@ body {
 }
 
 .delete-note-btn:hover {
-  background: var(--primary-pink);
+  background: var(--primary-peach);
   transform: scale(1.1);
   box-shadow: none !important;
 }

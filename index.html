@@ -12,7 +12,7 @@
 
   <!-- LEFT SIDEBAR -->
   <aside class="sidebar">
-    <h2>📋 Daily Todo</h2>
+  <h2>�️ Daily Todo</h2>
 
     <!-- Calendar Widget -->
     <div class="calendar-widget">
@@ -38,8 +38,8 @@
       <button class="today-btn" onclick="goToToday()">Today</button>
     </div>
 
-    <button class="add-task-modal-btn" onclick="openTaskModal()"> Add Task</button>
-    <button onclick="deleteTask()">Delete</button>
+  <button class="add-task-modal-btn" onclick="openTaskModal()">✚ Add Task</button>
+  <button onclick="deleteTask()">🗑️ Delete Completed</button>
 
     <ul id="taskList"></ul>
   </aside>
@@ -47,13 +47,13 @@
   <!-- RIGHT DASHBOARD -->
   <main class="dashboard">
     <div class="dashboard-header">
-      <h1>📊 Dashboard</h1>
+  <h1>� Dashboard</h1>
       <div class="export-buttons">
         <button class="export-btn" onclick="exportToCSV()" title="Export to CSV/Excel">
-          📥 Export Notes
+          ⬇️ Export Notes
         </button>
         <button class="export-btn" onclick="emailNotes()" title="Email Notes">
-          📧 Email Notes
+          ✉️ Email Notes
         </button>
       </div>
     </div>
@@ -84,24 +84,24 @@
     <!-- Analytics Charts -->
     <div class="charts-row">
       <div class="card chart-card">
-        <h3>📈 Weekly Activity</h3>
+  <h3>📈 Weekly Activity</h3>
         <canvas id="weeklyActivityChart"></canvas>
       </div>
       
       <div class="card chart-card">
-        <h3>📊 Task Distribution</h3>
+  <h3>📊 Task Distribution</h3>
         <canvas id="taskDistributionChart"></canvas>
       </div>
     </div>
 
     <div class="charts-row">
       <div class="card chart-card">
-        <h3>🎯 Daily Completion Rate</h3>
+  <h3>🎯 Daily Completion Rate</h3>
         <canvas id="dailyCompletionChart"></canvas>
       </div>
       
       <div class="card chart-card">
-        <h3>📅 Monthly Overview</h3>
+  <h3>�️ Monthly Overview</h3>
         <canvas id="monthlyOverviewChart"></canvas>
       </div>
     </div>
@@ -113,7 +113,7 @@
       </div>
       
       <button class="add-note-btn" id="addNoteBtn" onclick="toggleNoteEditor()">
-        ➕ Add Note
+        ✚ Add Note
       </button>
       
       <div id="noteEditorContainer" style="display: none;">

@@ -26,6 +26,7 @@ let startDate = localStorage.getItem("startDate") || selectedDate;
 let currentCalendarMonth = new Date(selectedDate);
 let currentNoteTaskIndex = null;
 let editingNoteIndex = null;
+let currentSummaryParentId = null;
 
 // Chart instances
 let weeklyActivityChart = null;
@@ -69,7 +70,7 @@ function addSubtaskInput() {
   inputWrapper.className = 'subtask-input-wrapper';
   inputWrapper.innerHTML = `
     <input type="text" id="${inputId}" placeholder="Enter subtask" class="modal-input subtask-input">
-    <button class="remove-subtask-btn" onclick="removeSubtaskInput(this)">✕</button>
+    <button class="remove-subtask-btn" onclick="removeSubtaskInput(this)">✖</button>
   `;
   
   subtasksList.appendChild(inputWrapper);
@@ -209,10 +210,9 @@ function renderTasks() {
           <span>${task.text}</span>
           <div class="task-actions">
             ${subtaskCount > 0 ? `<span class="subtask-count">${completedSubtasks}/${subtaskCount}</span>` : ''}
-            <button class="add-subtask-btn" onclick="addSubtask(${index})" title="Add Subtask">➕</button>
-            <button class="eye-btn ${hasNotes ? 'has-notes' : ''}" onclick="openNotes(${index})" title="Add/View Notes">
-              👁️
-            </button>
+            <button class="add-subtask-btn" onclick="addSubtask(${index})" title="Add Subtask">✚</button>
+            <button class="summary-btn" onclick="openNotesSummary(${index})" title="View Subtask Notes Summary">📑</button>
+            
           </div>
         </div>
         ${completionInfo}
@@ -253,9 +253,7 @@ function renderTasks() {
             <input type="checkbox" ${subtask.done ? "checked" : ""}
               onclick="toggleTask(${subIndex})">
             <span>${subtask.text}</span>
-            <button class="eye-btn ${subHasNotes ? 'has-notes' : ''}" onclick="openNotes(${subIndex})" title="Add/View Notes">
-              👁️
-            </button>
+           
           </div>
           ${subCompletionInfo}
         </li>
@@ -385,6 +383,9 @@ function openNotes(index) {
     closeNotes();
   }
   
+  // If we were in summary view, clear it
+  currentSummaryParentId = null;
+
   currentNoteTaskIndex = index;
   editingNoteIndex = null;
   const task = tasks[index];
@@ -403,6 +404,29 @@ function openNotes(index) {
   document.getElementById("notesCard").scrollIntoView({ behavior: 'smooth', block: 'nearest' });
 }
 
+function openNotesSummary(parentIndex) {
+  // Close notes if switching
+  if (currentSummaryParentId !== null && currentSummaryParentId !== tasks[parentIndex].id) {
+    closeNotes();
+  }
+
+  currentSummaryParentId = tasks[parentIndex].id;
+  currentNoteTaskIndex = null;
+  editingNoteIndex = null;
+
+  const parentTask = tasks[parentIndex];
+  document.getElementById("notesCard").style.display = "block";
+  document.getElementById("notesTaskTitle").innerText = `Notes Summary: ${parentTask.text}`;
+  document.getElementById("notesTextarea").innerHTML = "";
+  // Hide editor for summary view
+  document.getElementById("noteEditorContainer").style.display = "none";
+  document.getElementById("addNoteBtn").style.display = "none";
+  document.querySelector(".save-notes-btn").innerText = "Save Note";
+
+  renderSavedNotes();
+  document.getElementById("notesCard").scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+}
+
 function closeNotes() {
   document.getElementById("notesCard").style.display = "none";
   document.getElementById("noteEditorContainer").style.display = "none";
@@ -410,6 +434,7 @@ function closeNotes() {
   document.getElementById("savedNotesContainer").innerHTML = ""; // Clear saved notes display
   currentNoteTaskIndex = null;
   editingNoteIndex = null;
+  currentSummaryParentId = null;
   document.getElementById("notesTextarea").innerHTML = "";
 }
 
@@ -472,6 +497,40 @@ function renderSavedNotes() {
   const container = document.getElementById("savedNotesContainer");
   container.innerHTML = "";
   
+  // If summary view is active, aggregate notes from subtasks
+  if (currentSummaryParentId !== null) {
+    const subtasks = tasks.filter(t => t.parentId === currentSummaryParentId);
+    if (subtasks.length === 0) {
+      container.innerHTML = `<div class="card">No subtasks for this task.</div>`;
+      return;
+    }
+
+    let anyNotes = false;
+    subtasks.forEach((subtask) => {
+      const subIndex = tasks.indexOf(subtask);
+      const wrapper = document.createElement('div');
+      wrapper.className = 'card saved-note-card';
+      let inner = `<div class="saved-note-header"><h4>${subtask.text}</h4><div class="note-actions"><button class="open-subtask-notes" onclick="openNotes(${subIndex})" title="Open Subtask Notes">Open</button></div></div>`;
+      if (subtask.notes && subtask.notes.length > 0) {
+        anyNotes = true;
+        subtask.notes.forEach((note, noteIndex) => {
+          inner += `<p class="note-content">${note}</p>`;
+        });
+      } else {
+        inner += `<p class="note-content muted">No notes for this subtask.</p>`;
+      }
+      wrapper.innerHTML = inner;
+      container.appendChild(wrapper);
+    });
+
+    if (!anyNotes) {
+      // If none of the subtasks have notes, show message
+      container.insertAdjacentHTML('afterbegin', `<div class="card">No notes found for any subtasks.</div>`);
+    }
+    return;
+  }
+
+  // Default: show notes for a specific task
   if (currentNoteTaskIndex !== null && tasks[currentNoteTaskIndex]) {
     const task = tasks[currentNoteTaskIndex];
     
@@ -483,7 +542,7 @@ function renderSavedNotes() {
           <div class="saved-note-header">
             <h4>Note ${noteIndex + 1}</h4>
             <div class="note-actions">
-              <button class="edit-note-btn" onclick="editNote(${currentNoteTaskIndex}, ${noteIndex})" title="Edit Note">✏️</button>
+              <button class="edit-note-btn" onclick="editNote(${currentNoteTaskIndex}, ${noteIndex})" title="Edit Note">🖊️</button>
               <button class="delete-note-btn" onclick="deleteNote(${currentNoteTaskIndex}, ${noteIndex})" title="Delete Note">🗑️</button>
             </div>
           </div>
